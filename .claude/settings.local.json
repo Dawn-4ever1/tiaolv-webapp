@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:bbs.nga.cn)",
+      "WebFetch(domain:www.tieba.baidu.com)"
+    ]
+  }
+}
