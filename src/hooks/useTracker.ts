@@ -15,6 +15,17 @@ export interface AffixPoolEntry extends Affix {
   isSpecial: boolean;
   remainingCount: number;
   probability: number;
+  canAppear: boolean;
+}
+
+// 判断词条是否属于属性攻击类
+function isElementAttackAffix(affix: Affix): boolean {
+  return affix.category === 'elemAtk';
+}
+
+// 判断词条是否属于增伤类
+function isDamageAffix(affix: Affix): boolean {
+  return affix.category === 'damage';
 }
 
 export function useTracker() {
@@ -35,9 +46,24 @@ export function useTracker() {
     return state.history[currentEquipIndex]?.affixes.length ?? 0;
   }, [state.history, currentEquipIndex]);
 
-  const currentEquipFirstAffix = useMemo(() => {
-    return state.history[currentEquipIndex]?.firstAffix ?? '';
-  }, [state.history, currentEquipIndex]);
+  // 当前装备已出的属性攻击词条数
+  const currentElementAttackCount = useMemo(() => {
+    const affixes = state.history[currentEquipIndex]?.affixes ?? [];
+    return affixes.filter(id => {
+      const affix = currentPosition?.affixes.find(a => a.id === id);
+      return affix && isElementAttackAffix(affix);
+    }).length;
+  }, [state, currentEquipIndex, currentPosition]);
+
+  // 当前装备已出的增伤词条数
+  const currentDamageCount = useMemo(() => {
+    const affixes = state.history[currentEquipIndex]?.affixes ?? [];
+    return affixes.filter(id => {
+      const affix = currentPosition?.affixes.find(a => a.id === id);
+      const specialId = currentPosition?.specialAffix?.id;
+      return (affix && isDamageAffix(affix)) || id === specialId;
+    }).length;
+  }, [state, currentEquipIndex, currentPosition]);
 
   const affixPool = useMemo<AffixPoolEntry[]>(() => {
     if (!currentPosition) return [];
@@ -66,29 +92,75 @@ export function useTracker() {
 
     const currentEquipAffixes = state.history[currentEquipIndex]?.affixes ?? [];
 
-    let totalRemaining = 0;
+    // 判断每个词条能否出现（考虑约束）
     const entries: AffixPoolEntry[] = allAffixes.map(affix => {
       const remaining = supplementCount - (consumedCount[affix.id] ?? 0);
-      const isAvailable = !currentEquipAffixes.includes(affix.id);
-      const effectiveRemaining = isAvailable ? remaining : 0;
-      totalRemaining += effectiveRemaining;
+      const isAlreadyInEquip = currentEquipAffixes.includes(affix.id);
+
+      let canAppear = !isAlreadyInEquip && remaining > 0;
+
+      // 属性攻击约束：一件装备最多2条
+      if (canAppear && isElementAttackAffix(affix)) {
+        if (currentElementAttackCount >= 2) {
+          canAppear = false;
+        }
+      }
+
+      // 增伤类约束：一件装备最多1条
+      if (canAppear && isDamageAffix(affix)) {
+        if (currentDamageCount >= 1) {
+          canAppear = false;
+        }
+      }
 
       return {
         ...affix,
         remainingCount: remaining,
         probability: 0,
+        canAppear,
       };
     });
 
+    // 大类初始比例（仅用于计算单个词条的基础权重）
+    const categoryRatio: Record<string, number> = {
+      damage: 5,
+      survival: 15,
+      physAtk: 20,
+      elemAtk: 20,
+      rate: 20,
+      attr: 20,
+    };
+
+    // 每个大类的词条总数（用于计算单个词条权重）
+    const affixesInCategory: Record<string, number> = {};
+    for (const affix of allAffixes) {
+      affixesInCategory[affix.category] = (affixesInCategory[affix.category] ?? 0) + 1;
+    }
+
+    // 单个词条的基础权重 = 大类比例 / 类内词条数
+    const affixWeight: Record<string, number> = {};
+    for (const affix of allAffixes) {
+      affixWeight[affix.id] = categoryRatio[affix.category] / (affixesInCategory[affix.category] ?? 1);
+    }
+
+    // 计算概率：每个词条概率 = (权重 × 剩余数量) / 可出现词条总权重 × 100
+    const totalAvailableWeight = entries.reduce((sum, entry) => {
+      if (entry.canAppear) {
+        return sum + affixWeight[entry.id] * entry.remainingCount;
+      }
+      return sum;
+    }, 0);
+
     for (const entry of entries) {
-      const isAvailable = !currentEquipAffixes.includes(entry.id);
-      entry.probability = isAvailable && totalRemaining > 0
-        ? (entry.remainingCount / totalRemaining) * 100
-        : 0;
+      if (entry.canAppear && totalAvailableWeight > 0) {
+        entry.probability = (affixWeight[entry.id] * entry.remainingCount) / totalAvailableWeight * 100;
+      } else {
+        entry.probability = 0;
+      }
     }
 
     return entries;
-  }, [currentPosition, state, currentEquipIndex]);
+  }, [currentPosition, state, currentEquipIndex, currentElementAttackCount, currentDamageCount]);
 
   const totalPoolRemaining = useMemo(() => {
     return affixPool.reduce((sum, a) => sum + a.remainingCount, 0);
@@ -186,7 +258,6 @@ export function useTracker() {
       try {
         const data = JSON.parse(e.target?.result as string);
         if (data.positionId && data.history) {
-          // 兼容旧格式（string[][]）和新格式（EquipRecord[]）
           const history: EquipRecord[] = data.history.map((item: string[] | EquipRecord) => {
             if (Array.isArray(item)) {
               return { firstAffix: '', affixes: item };
@@ -211,7 +282,6 @@ export function useTracker() {
     currentPosition,
     currentEquipIndex,
     currentEquipAffixCount,
-    currentEquipFirstAffix,
     affixPool,
     totalPoolRemaining,
     setPosition,

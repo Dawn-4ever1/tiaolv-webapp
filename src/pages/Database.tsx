@@ -2,7 +2,8 @@ import { positions, getCategoryName } from '../data/affixes';
 
 export default function Database() {
   const categoryColors: Record<string, string> = {
-    attack: 'var(--color-attack)',
+    physAtk: 'var(--color-physAtk)',
+    elemAtk: 'var(--color-elemAtk)',
     survival: 'var(--color-survival)',
     rate: 'var(--color-rate)',
     damage: 'var(--color-damage)',
@@ -44,7 +45,7 @@ export default function Database() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {/* 按类别分组 */}
-            {(['attack', 'survival', 'rate', 'damage', 'attr'] as const).map(category => {
+            {(['physAtk', 'elemAtk', 'survival', 'rate', 'damage', 'attr'] as const).map(category => {
               const categoryAffixes = position.affixes.filter(a => a.category === category);
               if (categoryAffixes.length === 0) return null;
 

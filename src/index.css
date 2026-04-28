@@ -6,7 +6,8 @@
   --color-text: #eaeaea;
   --color-text-muted: #a0a0a0;
   --color-border: #2a2a4a;
-  --color-attack: #ff6b6b;
+  --color-physAtk: #ff6b6b;
+  --color-elemAtk: #f97316;
   --color-survival: #4ecdc4;
   --color-rate: #ffe66d;
   --color-damage: #a855f7;

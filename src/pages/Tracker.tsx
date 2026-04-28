@@ -36,7 +36,8 @@ export default function Tracker() {
   };
 
   const categoryColors: Record<string, string> = {
-    attack: 'var(--color-attack)',
+    physAtk: 'var(--color-physAtk)',
+    elemAtk: 'var(--color-elemAtk)',
     survival: 'var(--color-survival)',
     rate: 'var(--color-rate)',
     damage: 'var(--color-damage)',
@@ -215,7 +216,7 @@ export default function Tracker() {
             <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>池剩余</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--color-attack)' }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--color-physAtk)' }}>
               {isCurrentEquip ? 4 - currentEquipAffixCount : 0}
             </div>
             <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>可调次数</div>
@@ -224,7 +225,7 @@ export default function Tracker() {
 
         {/* 词条池 - 类别并列 */}
         <div style={{ display: 'flex', gap: '1rem' }}>
-          {(['attack', 'survival', 'rate', 'damage', 'attr'] as const).map(category => {
+          {(['physAtk', 'elemAtk', 'survival', 'rate', 'damage', 'attr'] as const).map(category => {
             const categoryAffixes = affixPool.filter(a => a.category === category);
             if (categoryAffixes.length === 0) return null;
 
@@ -241,8 +242,7 @@ export default function Tracker() {
                   {getCategoryName(category)}
                 </div>
                 {categoryAffixes.map(a => {
-                  const isInCurrentEquip = isCurrentEquip && state.history[currentEquipIndex]?.affixes.includes(a.id);
-                  const canClick = isCurrentEquip && !isInCurrentEquip && currentEquipAffixCount < 4 && a.remainingCount > 0;
+                  const canClick = isCurrentEquip && a.canAppear && currentEquipAffixCount < 4;
 
                   return (
                     <div
@@ -256,7 +256,7 @@ export default function Tracker() {
                         borderLeft: `2px solid ${categoryColors[category]}`,
                         marginBottom: '0.1rem',
                         fontSize: '0.8rem',
-                        opacity: isInCurrentEquip ? 0.3 : (a.remainingCount === 0 ? 0.3 : 1),
+                        opacity: !a.canAppear ? 0.3 : 1,
                         cursor: canClick ? 'pointer' : 'default',
                         background: canClick ? 'var(--color-bg)' : 'transparent',
                       }}
