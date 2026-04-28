@@ -1,121 +1,174 @@
 import { useState, useCallback, useMemo } from 'react';
 import { positions, getPosition, type Position, type Affix } from '../data/affixes';
 
-export interface TrackerState {
-  positionId: string;
-  history: string[];
-  specialAffixUsed: boolean;
+export interface EquipRecord {
+  firstAffix: string;
+  affixes: string[];
 }
 
-export interface AffixWithProbability extends Affix {
+export interface TrackerState {
+  positionId: string;
+  history: EquipRecord[];
+}
+
+export interface AffixPoolEntry extends Affix {
+  isSpecial: boolean;
+  remainingCount: number;
   probability: number;
-  isAppeared: boolean;
-  timesAppeared: number;
 }
 
 export function useTracker() {
   const [state, setState] = useState<TrackerState>({
     positionId: 'huan',
-    history: [],
-    specialAffixUsed: false,
+    history: [{ firstAffix: '', affixes: [] }],
   });
 
   const currentPosition = useMemo<Position | undefined>(() => {
     return getPosition(state.positionId);
   }, [state.positionId]);
 
-  const allAffixes = useMemo(() => {
+  const currentEquipIndex = useMemo(() => {
+    return state.history.length - 1;
+  }, [state.history]);
+
+  const currentEquipAffixCount = useMemo(() => {
+    return state.history[currentEquipIndex]?.affixes.length ?? 0;
+  }, [state.history, currentEquipIndex]);
+
+  const currentEquipFirstAffix = useMemo(() => {
+    return state.history[currentEquipIndex]?.firstAffix ?? '';
+  }, [state.history, currentEquipIndex]);
+
+  const affixPool = useMemo<AffixPoolEntry[]>(() => {
     if (!currentPosition) return [];
-    const affixes: (Affix & { isSpecial?: boolean })[] = [...currentPosition.affixes];
+
+    const allAffixes: (Affix & { isSpecial: boolean })[] = currentPosition.affixes.map(a => ({
+      ...a,
+      isSpecial: false,
+    }));
     if (currentPosition.specialAffix) {
-      affixes.push({
+      allAffixes.push({
         id: currentPosition.specialAffix.id,
         name: currentPosition.specialAffix.name,
         category: 'damage',
         isSpecial: true,
       });
     }
-    return affixes;
-  }, [currentPosition]);
 
-  const affixesWithStats = useMemo<AffixWithProbability[]>(() => {
-    if (!currentPosition) return [];
+    const supplementCount = state.history.length;
 
-    const totalWeight = allAffixes.reduce((sum, affix) => {
-      if ('isSpecial' in affix && affix.isSpecial && currentPosition.specialAffix) {
-        return sum + 1 / currentPosition.specialAffix.weight;
+    const consumedCount: Record<string, number> = {};
+    for (const equip of state.history) {
+      for (const affixId of equip.affixes) {
+        consumedCount[affixId] = (consumedCount[affixId] ?? 0) + 1;
       }
-      if (currentPosition.specialAffix) {
-        return sum + (16 / 17) / (allAffixes.length - 1);
-      }
-      return sum + 1 / allAffixes.length;
-    }, 0);
+    }
 
-    return allAffixes.map(affix => {
-      let weight: number;
+    const currentEquipAffixes = state.history[currentEquipIndex]?.affixes ?? [];
 
-      if ('isSpecial' in affix && affix.isSpecial && currentPosition.specialAffix) {
-        weight = 1 / currentPosition.specialAffix.weight;
-      } else if (currentPosition.specialAffix) {
-        weight = (16 / 17) / (allAffixes.length - 1);
-      } else {
-        weight = 1 / allAffixes.length;
-      }
-
-      const timesAppeared = state.history.filter(id => id === affix.id).length;
+    let totalRemaining = 0;
+    const entries: AffixPoolEntry[] = allAffixes.map(affix => {
+      const remaining = supplementCount - (consumedCount[affix.id] ?? 0);
+      const isAvailable = !currentEquipAffixes.includes(affix.id);
+      const effectiveRemaining = isAvailable ? remaining : 0;
+      totalRemaining += effectiveRemaining;
 
       return {
         ...affix,
-        probability: weight / totalWeight * 100,
-        isAppeared: timesAppeared > 0,
-        timesAppeared,
+        remainingCount: remaining,
+        probability: 0,
       };
     });
-  }, [allAffixes, currentPosition, state.history]);
 
-  const appearedAffixes = useMemo(() => {
-    return affixesWithStats.filter(a => a.isAppeared);
-  }, [affixesWithStats]);
+    for (const entry of entries) {
+      const isAvailable = !currentEquipAffixes.includes(entry.id);
+      entry.probability = isAvailable && totalRemaining > 0
+        ? (entry.remainingCount / totalRemaining) * 100
+        : 0;
+    }
 
-  const remainingAffixes = useMemo(() => {
-    return affixesWithStats.filter(a => !a.isAppeared);
-  }, [affixesWithStats]);
+    return entries;
+  }, [currentPosition, state, currentEquipIndex]);
+
+  const totalPoolRemaining = useMemo(() => {
+    return affixPool.reduce((sum, a) => sum + a.remainingCount, 0);
+  }, [affixPool]);
 
   const setPosition = useCallback((positionId: string) => {
-    setState(prev => ({ ...prev, positionId, history: [], specialAffixUsed: false }));
+    setState({ positionId, history: [{ firstAffix: '', affixes: [] }] });
   }, []);
+
+  const setFirstAffix = useCallback((affixId: string) => {
+    setState(prev => {
+      const newHistory = [...prev.history];
+      newHistory[currentEquipIndex] = {
+        ...newHistory[currentEquipIndex],
+        firstAffix: affixId,
+      };
+      return { ...prev, history: newHistory };
+    });
+  }, [currentEquipIndex]);
 
   const addHistory = useCallback((affixId: string) => {
     setState(prev => {
-      if (currentPosition?.specialAffix && affixId === currentPosition.specialAffix.id) {
-        return { ...prev, history: [...prev.history, affixId], specialAffixUsed: true };
+      const newHistory = [...prev.history];
+      const currentEquip = newHistory[currentEquipIndex];
+      const newAffixes = [...currentEquip.affixes, affixId];
+      newHistory[currentEquipIndex] = { ...currentEquip, affixes: newAffixes };
+
+      if (newAffixes.length >= 4) {
+        newHistory.push({ firstAffix: '', affixes: [] });
       }
-      return { ...prev, history: [...prev.history, affixId] };
+
+      return { ...prev, history: newHistory };
     });
-  }, [currentPosition]);
+  }, [currentEquipIndex]);
 
   const removeLastHistory = useCallback(() => {
     setState(prev => {
-      if (prev.history.length === 0) return prev;
-      const lastId = prev.history[prev.history.length - 1];
-      const newHistory = prev.history.slice(0, -1);
-      let newSpecialAffixUsed = prev.specialAffixUsed;
-      if (currentPosition?.specialAffix && lastId === currentPosition.specialAffix.id) {
-        newSpecialAffixUsed = false;
+      const newHistory = [...prev.history];
+      const currentEquip = newHistory[currentEquipIndex];
+
+      if (currentEquip.affixes.length === 0 && currentEquipIndex > 0) {
+        newHistory.pop();
+        const prevEquip = newHistory[newHistory.length - 1];
+        if (prevEquip.affixes.length > 0) {
+          newHistory[newHistory.length - 1] = {
+            ...prevEquip,
+            affixes: prevEquip.affixes.slice(0, -1),
+          };
+        }
+      } else if (currentEquip.affixes.length > 0) {
+        newHistory[currentEquipIndex] = {
+          ...currentEquip,
+          affixes: currentEquip.affixes.slice(0, -1),
+        };
       }
-      return { ...prev, history: newHistory, specialAffixUsed: newSpecialAffixUsed };
+
+      return { ...prev, history: newHistory };
     });
-  }, [currentPosition]);
+  }, [currentEquipIndex]);
+
+  const startNewEquip = useCallback(() => {
+    setState(prev => {
+      const currentEquip = prev.history[prev.history.length - 1];
+      if (currentEquip.affixes.length > 0 && currentEquip.affixes.length < 4) {
+        const newHistory = [...prev.history];
+        newHistory.push({ firstAffix: '', affixes: [] });
+        return { ...prev, history: newHistory };
+      }
+      return prev;
+    });
+  }, []);
 
   const reset = useCallback(() => {
-    setState(prev => ({ ...prev, history: [], specialAffixUsed: false }));
+    setState(prev => ({ ...prev, history: [{ firstAffix: '', affixes: [] }] }));
   }, []);
 
   const exportData = useCallback(() => {
     const data = {
       positionId: state.positionId,
       history: state.history,
-      specialAffixUsed: state.specialAffixUsed,
       exportedAt: new Date().toISOString(),
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -133,10 +186,16 @@ export function useTracker() {
       try {
         const data = JSON.parse(e.target?.result as string);
         if (data.positionId && data.history) {
+          // 兼容旧格式（string[][]）和新格式（EquipRecord[]）
+          const history: EquipRecord[] = data.history.map((item: string[] | EquipRecord) => {
+            if (Array.isArray(item)) {
+              return { firstAffix: '', affixes: item };
+            }
+            return item;
+          });
           setState({
             positionId: data.positionId,
-            history: data.history,
-            specialAffixUsed: data.specialAffixUsed || false,
+            history,
           });
         }
       } catch {
@@ -150,13 +209,16 @@ export function useTracker() {
     positions,
     state,
     currentPosition,
-    allAffixes,
-    affixesWithStats,
-    appearedAffixes,
-    remainingAffixes,
+    currentEquipIndex,
+    currentEquipAffixCount,
+    currentEquipFirstAffix,
+    affixPool,
+    totalPoolRemaining,
     setPosition,
+    setFirstAffix,
     addHistory,
     removeLastHistory,
+    startNewEquip,
     reset,
     exportData,
     importData,
