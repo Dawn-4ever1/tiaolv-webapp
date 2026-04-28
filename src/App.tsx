@@ -11,11 +11,15 @@ function NavBar() {
   return (
     <nav style={{
       background: 'var(--color-card)',
-      padding: '1rem 2rem',
-      display: 'flex',
-      gap: '2rem',
       borderBottom: '1px solid var(--color-border)',
     }}>
+      <div style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '1rem 3rem',
+        display: 'flex',
+        gap: '2rem',
+      }}>
       <Link
         to="/"
         style={{
@@ -49,6 +53,7 @@ function NavBar() {
       >
         使用说明
       </Link>
+    </div>
     </nav>
   );
 }
@@ -58,7 +63,7 @@ function App() {
     <BrowserRouter>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <NavBar />
-        <main style={{ flex: 1, padding: '2rem' }}>
+        <main style={{ flex: 1, padding: '2rem 3rem' }}>
           <Routes>
             <Route path="/" element={<Tracker />} />
             <Route path="/database" element={<Database />} />

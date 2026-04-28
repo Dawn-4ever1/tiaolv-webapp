@@ -45,32 +45,34 @@ export default function Tracker() {
   };
 
   const isCurrentEquip = selectedEquip === currentEquipIndex;
+  const hasHistory = !state.history.every(e => e.affixes.length === 0);
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.8rem', marginBottom: '1rem', color: 'var(--color-primary)' }}>
-        调律追踪器
-      </h1>
-
-      {/* 位置选择 */}
-      <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-        {positions.map(pos => (
-          <button
-            key={pos.id}
-            onClick={() => setPosition(pos.id)}
-            style={{
-              padding: '0.4rem 0.8rem',
-              background: state.positionId === pos.id ? 'var(--color-primary)' : 'var(--color-card)',
-              color: 'var(--color-text)',
-              border: '1px solid var(--color-border)',
-              borderRadius: '0.4rem',
-              fontSize: '0.9rem',
-              fontWeight: state.positionId === pos.id ? 'bold' : 'normal',
-            }}
-          >
-            {pos.name}
-          </button>
-        ))}
+    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      {/* 标题 + 位置选择同一行 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <h1 style={{ fontSize: '1.8rem', color: 'var(--color-primary)' }}>
+          调律追踪器
+        </h1>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          {positions.map(pos => (
+            <button
+              key={pos.id}
+              onClick={() => setPosition(pos.id)}
+              style={{
+                padding: '0.4rem 0.8rem',
+                background: state.positionId === pos.id ? 'var(--color-primary)' : 'var(--color-card)',
+                color: 'var(--color-text)',
+                border: `1px solid ${state.positionId === pos.id ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                borderRadius: '0.4rem',
+                fontSize: '0.9rem',
+                fontWeight: state.positionId === pos.id ? 'bold' : 'normal',
+              }}
+            >
+              {pos.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 装备卡片横排 */}
@@ -101,7 +103,7 @@ export default function Tracker() {
                 {isActive ? `第${equipIdx + 1}件 · 调律中` : `第${equipIdx + 1}件装备`}
               </div>
 
-              {/* 首词条 - 所有装备都显示 */}
+              {/* 首词条 */}
               <div style={{
                 padding: '0.5rem 0.7rem',
                 borderBottom: '1px solid var(--color-border)',
@@ -193,38 +195,38 @@ export default function Tracker() {
       <div style={{
         background: 'var(--color-card)',
         borderRadius: '0.75rem',
-        padding: '1rem',
+        padding: '1.25rem',
       }}>
         {/* 池信息 */}
         <div style={{
           display: 'flex',
-          gap: '1rem',
+          gap: '1.5rem',
           marginBottom: '1rem',
           borderBottom: '1px solid var(--color-border)',
           paddingBottom: '0.75rem',
         }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
+            <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
               {currentEquipIndex + 1}
             </div>
-            <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>装备</div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>装备</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--color-survival)' }}>
+            <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: 'var(--color-survival)' }}>
               {totalPoolRemaining}
             </div>
-            <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>池剩余</div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>池剩余</div>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--color-physAtk)' }}>
+            <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: 'var(--color-physAtk)' }}>
               {isCurrentEquip ? 4 - currentEquipAffixCount : 0}
             </div>
-            <div style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem' }}>可调次数</div>
+            <div style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>可调次数</div>
           </div>
         </div>
 
         {/* 词条池 - 类别并列 */}
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
           {(['physAtk', 'elemAtk', 'survival', 'rate', 'damage', 'attr'] as const).map(category => {
             const categoryAffixes = affixPool.filter(a => a.category === category);
             if (categoryAffixes.length === 0) return null;
@@ -289,45 +291,45 @@ export default function Tracker() {
       <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         <button
           onClick={removeLastHistory}
-          disabled={state.history.every(e => e.affixes.length === 0)}
+          disabled={!hasHistory}
           style={{
-            padding: '0.6rem 1rem',
-            background: !state.history.every(e => e.affixes.length === 0) ? 'var(--color-secondary)' : 'var(--color-bg)',
+            padding: '0.6rem 1.2rem',
+            background: hasHistory ? 'var(--color-secondary)' : 'var(--color-bg)',
             color: 'var(--color-text)',
             border: '1px solid var(--color-border)',
             borderRadius: '0.4rem',
             fontSize: '0.85rem',
-            opacity: state.history.every(e => e.affixes.length === 0) ? 0.5 : 1,
+            opacity: hasHistory ? 1 : 0.5,
           }}
         >
           撤销
         </button>
         <button
           onClick={reset}
-          disabled={state.history.every(e => e.affixes.length === 0)}
+          disabled={!hasHistory}
           style={{
-            padding: '0.6rem 1rem',
-            background: !state.history.every(e => e.affixes.length === 0) ? 'var(--color-primary)' : 'var(--color-bg)',
+            padding: '0.6rem 1.2rem',
+            background: hasHistory ? 'var(--color-primary)' : 'var(--color-bg)',
             color: 'var(--color-text)',
             border: '1px solid var(--color-border)',
             borderRadius: '0.4rem',
             fontSize: '0.85rem',
-            opacity: state.history.every(e => e.affixes.length === 0) ? 0.5 : 1,
+            opacity: hasHistory ? 1 : 0.5,
           }}
         >
           重置
         </button>
         <button
           onClick={exportData}
-          disabled={state.history.every(e => e.affixes.length === 0)}
+          disabled={!hasHistory}
           style={{
-            padding: '0.6rem 1rem',
-            background: !state.history.every(e => e.affixes.length === 0) ? 'var(--color-secondary)' : 'var(--color-bg)',
+            padding: '0.6rem 1.2rem',
+            background: hasHistory ? 'var(--color-secondary)' : 'var(--color-bg)',
             color: 'var(--color-text)',
             border: '1px solid var(--color-border)',
             borderRadius: '0.4rem',
             fontSize: '0.85rem',
-            opacity: state.history.every(e => e.affixes.length === 0) ? 0.5 : 1,
+            opacity: hasHistory ? 1 : 0.5,
           }}
         >
           导出
@@ -335,7 +337,7 @@ export default function Tracker() {
         <button
           onClick={() => fileInputRef.current?.click()}
           style={{
-            padding: '0.6rem 1rem',
+            padding: '0.6rem 1.2rem',
             background: 'var(--color-secondary)',
             color: 'var(--color-text)',
             border: '1px solid var(--color-border)',

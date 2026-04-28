@@ -36,11 +36,6 @@ export default function Database() {
 
           <div style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
             共 {position.affixes.length + (position.specialAffix ? 1 : 0)} 个词条
-            {position.specialAffix && (
-              <span style={{ color: 'var(--color-damage)' }}>
-                （含特殊词条：{position.specialAffix.name}，出现概率 1/{position.specialAffix.weight}）
-              </span>
-            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
