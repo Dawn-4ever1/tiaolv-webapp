@@ -1,0 +1,49 @@
+:root {
+  --color-bg: #1a1a2e;
+  --color-card: #16213e;
+  --color-primary: #e94560;
+  --color-secondary: #0f3460;
+  --color-text: #eaeaea;
+  --color-text-muted: #a0a0a0;
+  --color-border: #2a2a4a;
+  --color-attack: #ff6b6b;
+  --color-survival: #4ecdc4;
+  --color-rate: #ffe66d;
+  --color-damage: #a855f7;
+  --color-attr: #3b82f6;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+select {
+  font-family: inherit;
+}
