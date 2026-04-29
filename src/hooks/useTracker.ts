@@ -29,6 +29,18 @@ function isDamageAffix(affix: Affix): boolean {
   return affix.category === 'damage';
 }
 
+function canBeFirstAffix(positionId: string, affix: Affix): boolean {
+  if (positionId === 'huan' || positionId === 'pei') {
+    return affix.id === 'maxPhysAtk' || affix.id === 'minPhysAtk';
+  }
+
+  if (positionId === 'guanZhou' || positionId === 'xiongJia') {
+    return affix.category === 'rate' || affix.category === 'survival';
+  }
+
+  return true;
+}
+
 export function useTracker() {
   const [state, setState] = useState<TrackerState>({
     positionId: 'huan',
@@ -47,6 +59,11 @@ export function useTracker() {
   const currentEquipAffixCount = useMemo(() => {
     return state.history[currentEquipIndex]?.affixes.length ?? 0;
   }, [state.history, currentEquipIndex]);
+
+  const firstAffixOptions = useMemo<Affix[]>(() => {
+    if (!currentPosition) return [];
+    return currentPosition.affixes.filter(affix => canBeFirstAffix(state.positionId, affix));
+  }, [currentPosition, state.positionId]);
 
   // 当前装备已出的属性攻击词条数
   const currentElementAttackCount = useMemo(() => {
@@ -301,6 +318,7 @@ export function useTracker() {
     currentPosition,
     currentEquipIndex,
     currentEquipAffixCount,
+    firstAffixOptions,
     affixPool,
     totalPoolRemaining,
     setPosition,

@@ -8,6 +8,7 @@ export default function Tracker() {
     state,
     currentEquipIndex,
     currentEquipAffixCount,
+    firstAffixOptions,
     affixPool,
     totalPoolRemaining,
     setPosition,
@@ -129,7 +130,7 @@ export default function Tracker() {
                     }}
                   >
                     <option value="">—</option>
-                    {affixPool.map(a => (
+                    {firstAffixOptions.map(a => (
                       <option key={a.id} value={a.id}>{a.name}</option>
                     ))}
                   </select>
