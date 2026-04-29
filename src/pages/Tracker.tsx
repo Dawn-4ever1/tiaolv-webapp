@@ -46,16 +46,17 @@ export default function Tracker() {
   const hasHistory = !state.history.every(e => e.affixes.length === 0);
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="tracker-page" style={{ maxWidth: '1200px', margin: '0 auto' }}>
       {/* 标题 + 位置选择同一行 */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.8rem', color: 'var(--color-primary)' }}>
+      <div className="tracker-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <h1 className="tracker-title" style={{ fontSize: '1.8rem', color: 'var(--color-primary)' }}>
           调律追踪器
         </h1>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div className="position-tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
           {positions.map(pos => (
             <button
               key={pos.id}
+              className="position-tab"
               onClick={() => setPosition(pos.id)}
               style={{
                 padding: '0.4rem 0.8rem',
@@ -74,7 +75,7 @@ export default function Tracker() {
       </div>
 
       {/* 装备卡片横排 */}
-      <div style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-start' }}>
+      <div className="equipment-row" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-start' }}>
         {state.history.map((equip, equipIdx) => {
           const isSelected = selectedEquip === equipIdx;
           const isActive = equipIdx === currentEquipIndex && equip.affixes.length < 4;
@@ -82,6 +83,7 @@ export default function Tracker() {
           return (
             <div
               key={equipIdx}
+              className="equip-card"
               onClick={() => selectEquip(equipIdx)}
               style={{
                 background: isSelected ? 'var(--color-secondary)' : 'var(--color-card)',
@@ -172,6 +174,7 @@ export default function Tracker() {
 
         {/* 新增装备 */}
         <button
+          className="new-equip-button"
           onClick={startNewEquip}
           style={{
             background: 'var(--color-card)',
@@ -190,13 +193,13 @@ export default function Tracker() {
       </div>
 
       {/* 词条池大框 */}
-      <div style={{
+      <div className="pool-card" style={{
         background: 'var(--color-card)',
         borderRadius: '0.75rem',
         padding: '1.25rem',
       }}>
         {/* 池信息 */}
-        <div style={{
+        <div className="stats-row" style={{
           display: 'flex',
           gap: '1.5rem',
           marginBottom: '1rem',
@@ -224,13 +227,13 @@ export default function Tracker() {
         </div>
 
         {/* 词条池 - 类别并列 */}
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div className="affix-pool-grid" style={{ display: 'flex', gap: '0.75rem' }}>
           {(['physAtk', 'elemAtk', 'survival', 'rate', 'damage', 'attr'] as const).map(category => {
             const categoryAffixes = affixPool.filter(a => a.category === category);
             if (categoryAffixes.length === 0) return null;
 
             return (
-              <div key={category} style={{ flex: 1, minWidth: 0 }}>
+              <div key={category} className="affix-category" style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontSize: '0.85rem',
                   fontWeight: 'bold',
@@ -247,6 +250,7 @@ export default function Tracker() {
                   return (
                     <div
                       key={a.id}
+                      className="affix-row"
                       onClick={canClick ? () => addHistory(a.id) : undefined}
                       style={{
                         display: 'flex',
@@ -286,7 +290,7 @@ export default function Tracker() {
       </div>
 
       {/* 操作按钮 */}
-      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+      <div className="actions-row" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         <button
           onClick={removeLastHistory}
           disabled={!hasHistory}

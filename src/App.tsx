@@ -13,7 +13,7 @@ function NavBar() {
       background: 'var(--color-card)',
       borderBottom: '1px solid var(--color-border)',
     }}>
-      <div style={{
+      <div className="app-nav-inner" style={{
         maxWidth: '1200px',
         margin: '0 auto',
         padding: '1rem 3rem',
@@ -63,7 +63,7 @@ function App() {
     <BrowserRouter>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <NavBar />
-        <main style={{ flex: 1, padding: '2rem 3rem' }}>
+        <main className="app-main" style={{ flex: 1, padding: '2rem 3rem' }}>
           <Routes>
             <Route path="/" element={<Tracker />} />
             <Route path="/database" element={<Database />} />

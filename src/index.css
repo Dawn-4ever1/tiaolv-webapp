@@ -25,6 +25,7 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 #root {
@@ -47,4 +48,126 @@ button {
 
 select {
   font-family: inherit;
+}
+
+@media (max-width: 900px) {
+  .app-main {
+    padding: 1.25rem 1rem !important;
+  }
+
+  .app-nav-inner {
+    gap: 1.25rem !important;
+    overflow-x: auto;
+    padding: 0.85rem 1rem !important;
+    scrollbar-width: none;
+  }
+
+  .app-nav-inner::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-nav-inner a {
+    flex: 0 0 auto;
+    font-size: 1rem !important;
+    white-space: nowrap;
+  }
+
+  .tracker-page {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .tracker-header {
+    align-items: stretch !important;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .tracker-title {
+    font-size: 1.65rem !important;
+    line-height: 1.15;
+  }
+
+  .position-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem !important;
+  }
+
+  .position-tab {
+    min-height: 2.7rem;
+    padding: 0.45rem 0.35rem !important;
+    width: 100%;
+  }
+
+  .equipment-row {
+    display: grid !important;
+    grid-template-columns: 1fr;
+  }
+
+  .equip-card {
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  .new-equip-button {
+    min-height: 3rem;
+    width: 100%;
+  }
+
+  .pool-card {
+    border-radius: 0.6rem !important;
+    padding: 1rem !important;
+  }
+
+  .stats-row {
+    gap: 0.75rem !important;
+    justify-content: space-around;
+  }
+
+  .affix-pool-grid {
+    display: grid !important;
+    gap: 1rem !important;
+    grid-template-columns: 1fr;
+  }
+
+  .affix-category {
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  .affix-row {
+    min-height: 2.35rem;
+    padding: 0.45rem 0.6rem !important;
+  }
+
+  .affix-row > span:first-child {
+    white-space: normal !important;
+  }
+
+  .affix-row > span:last-child {
+    flex: 0 0 auto;
+  }
+
+  .actions-row button {
+    flex: 1 1 calc(50% - 0.5rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .app-main {
+    padding: 1rem 0.75rem !important;
+  }
+
+  .position-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pool-card {
+    padding: 0.85rem !important;
+  }
+
+  .stats-row {
+    justify-content: space-between;
+  }
 }
