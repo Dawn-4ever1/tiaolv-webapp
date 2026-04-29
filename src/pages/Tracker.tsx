@@ -11,6 +11,7 @@ export default function Tracker() {
     affixPool,
     totalPoolRemaining,
     setPosition,
+    selectEquip,
     setFirstAffix,
     addHistory,
     removeLastHistory,
@@ -21,11 +22,6 @@ export default function Tracker() {
   } = useTracker();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedEquip, setSelectedEquip] = React.useState<number>(currentEquipIndex);
-
-  React.useEffect(() => {
-    setSelectedEquip(currentEquipIndex);
-  }, [currentEquipIndex]);
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,7 +40,8 @@ export default function Tracker() {
     attr: 'var(--color-attr)',
   };
 
-  const isCurrentEquip = selectedEquip === currentEquipIndex;
+  const selectedEquip = currentEquipIndex;
+  const isCurrentEquip = true;
   const hasHistory = !state.history.every(e => e.affixes.length === 0);
 
   return (
@@ -84,7 +81,7 @@ export default function Tracker() {
           return (
             <div
               key={equipIdx}
-              onClick={() => setSelectedEquip(equipIdx)}
+              onClick={() => selectEquip(equipIdx)}
               style={{
                 background: isSelected ? 'var(--color-secondary)' : 'var(--color-card)',
                 border: `2px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,

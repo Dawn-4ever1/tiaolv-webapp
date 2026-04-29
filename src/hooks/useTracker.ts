@@ -8,6 +8,7 @@ export interface EquipRecord {
 
 export interface TrackerState {
   positionId: string;
+  activeEquipIndex: number;
   history: EquipRecord[];
 }
 
@@ -31,6 +32,7 @@ function isDamageAffix(affix: Affix): boolean {
 export function useTracker() {
   const [state, setState] = useState<TrackerState>({
     positionId: 'huan',
+    activeEquipIndex: 0,
     history: [{ firstAffix: '', affixes: [] }],
   });
 
@@ -39,8 +41,8 @@ export function useTracker() {
   }, [state.positionId]);
 
   const currentEquipIndex = useMemo(() => {
-    return state.history.length - 1;
-  }, [state.history]);
+    return Math.min(state.activeEquipIndex, state.history.length - 1);
+  }, [state.activeEquipIndex, state.history.length]);
 
   const currentEquipAffixCount = useMemo(() => {
     return state.history[currentEquipIndex]?.affixes.length ?? 0;
@@ -167,7 +169,16 @@ export function useTracker() {
   }, [affixPool]);
 
   const setPosition = useCallback((positionId: string) => {
-    setState({ positionId, history: [{ firstAffix: '', affixes: [] }] });
+    setState({ positionId, activeEquipIndex: 0, history: [{ firstAffix: '', affixes: [] }] });
+  }, []);
+
+  const selectEquip = useCallback((equipIndex: number) => {
+    setState(prev => {
+      if (equipIndex < 0 || equipIndex >= prev.history.length) {
+        return prev;
+      }
+      return { ...prev, activeEquipIndex: equipIndex };
+    });
   }, []);
 
   const setFirstAffix = useCallback((affixId: string) => {
@@ -190,6 +201,7 @@ export function useTracker() {
 
       if (newAffixes.length >= 4) {
         newHistory.push({ firstAffix: '', affixes: [] });
+        return { ...prev, activeEquipIndex: newHistory.length - 1, history: newHistory };
       }
 
       return { ...prev, history: newHistory };
@@ -200,16 +212,21 @@ export function useTracker() {
     setState(prev => {
       const newHistory = [...prev.history];
       const currentEquip = newHistory[currentEquipIndex];
+      if (!currentEquip) {
+        return prev;
+      }
 
       if (currentEquip.affixes.length === 0 && currentEquipIndex > 0) {
-        newHistory.pop();
-        const prevEquip = newHistory[newHistory.length - 1];
+        newHistory.splice(currentEquipIndex, 1);
+        const nextActiveIndex = Math.min(currentEquipIndex - 1, newHistory.length - 1);
+        const prevEquip = newHistory[nextActiveIndex];
         if (prevEquip.affixes.length > 0) {
-          newHistory[newHistory.length - 1] = {
+          newHistory[nextActiveIndex] = {
             ...prevEquip,
             affixes: prevEquip.affixes.slice(0, -1),
           };
         }
+        return { ...prev, activeEquipIndex: nextActiveIndex, history: newHistory };
       } else if (currentEquip.affixes.length > 0) {
         newHistory[currentEquipIndex] = {
           ...currentEquip,
@@ -227,14 +244,14 @@ export function useTracker() {
       if (currentEquip.affixes.length > 0 && currentEquip.affixes.length < 4) {
         const newHistory = [...prev.history];
         newHistory.push({ firstAffix: '', affixes: [] });
-        return { ...prev, history: newHistory };
+        return { ...prev, activeEquipIndex: newHistory.length - 1, history: newHistory };
       }
       return prev;
     });
   }, []);
 
   const reset = useCallback(() => {
-    setState(prev => ({ ...prev, history: [{ firstAffix: '', affixes: [] }] }));
+    setState(prev => ({ ...prev, activeEquipIndex: 0, history: [{ firstAffix: '', affixes: [] }] }));
   }, []);
 
   const exportData = useCallback(() => {
@@ -264,9 +281,11 @@ export function useTracker() {
             }
             return item;
           });
+          const safeHistory = history.length > 0 ? history : [{ firstAffix: '', affixes: [] }];
           setState({
             positionId: data.positionId,
-            history,
+            activeEquipIndex: Math.max(0, safeHistory.length - 1),
+            history: safeHistory,
           });
         }
       } catch {
@@ -285,6 +304,7 @@ export function useTracker() {
     affixPool,
     totalPoolRemaining,
     setPosition,
+    selectEquip,
     setFirstAffix,
     addHistory,
     removeLastHistory,
