@@ -30,12 +30,20 @@ function isDamageAffix(affix: Affix): boolean {
 }
 
 function canBeFirstAffix(positionId: string, affix: Affix): boolean {
+  if (positionId === 'leftWeapon' || positionId === 'rightWeapon') {
+    return ['maxPhysAtk', 'minPhysAtk', 'maxWuXiangAtk', 'minWuXiangAtk', 'shi', 'min'].includes(affix.id);
+  }
+
   if (positionId === 'huan' || positionId === 'pei') {
     return affix.id === 'maxPhysAtk' || affix.id === 'minPhysAtk';
   }
 
   if (positionId === 'guanZhou' || positionId === 'xiongJia') {
     return affix.category === 'rate' || affix.category === 'survival';
+  }
+
+  if (positionId === 'jingJia' || positionId === 'wanJia') {
+    return affix.category === 'rate' || affix.category === 'survival' || ['jing', 'ti', 'yu'].includes(affix.id);
   }
 
   return true;
