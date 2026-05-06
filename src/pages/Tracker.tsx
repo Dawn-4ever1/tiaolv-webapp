@@ -1,23 +1,29 @@
 import React, { useRef } from 'react';
 import { useTracker } from '../hooks/useTracker';
-import { getCategoryName } from '../data/affixes';
+import { getCategoryName, getWeaponDamageName } from '../data/affixes';
+import { categoryColors } from '../utils/styles';
 
 export default function Tracker() {
   const {
     positions,
+    weaponTypes,
     state,
     currentEquipIndex,
     currentEquipAffixCount,
+    isWeaponPosition,
     firstAffixOptions,
     affixPool,
     totalPoolRemaining,
+    targetProbability,
     setPosition,
+    setWeaponType,
     selectEquip,
     setFirstAffix,
     addHistory,
     removeLastHistory,
     startNewEquip,
     reset,
+    toggleTarget,
     exportData,
     importData,
   } = useTracker();
@@ -32,18 +38,28 @@ export default function Tracker() {
     }
   };
 
-  const categoryColors: Record<string, string> = {
-    physAtk: 'var(--color-physAtk)',
-    elemAtk: 'var(--color-elemAtk)',
-    survival: 'var(--color-survival)',
-    rate: 'var(--color-rate)',
-    damage: 'var(--color-damage)',
-    attr: 'var(--color-attr)',
-  };
-
   const selectedEquip = currentEquipIndex;
   const isCurrentEquip = true;
   const hasHistory = !state.history.every(e => e.affixes.length === 0);
+
+  const maxProbabilityInCategory = (category: string) => {
+    return Math.max(...affixPool.filter(a => a.category === category && a.canAppear).map(a => a.probability), 0);
+  };
+
+  // Resolve weapon special affix display name for equipment cards
+  const resolveAffixName = (affixId: string) => {
+    if (affixId === 'weaponTypeDmg' && isWeaponPosition) {
+      return getWeaponDamageName(state.weaponType);
+    }
+    const affix = affixPool.find(a => a.id === affixId);
+    return affix?.name ?? '—';
+  };
+
+  const resolveAffixCategory = (affixId: string) => {
+    if (affixId === 'weaponTypeDmg') return 'damage';
+    const affix = affixPool.find(a => a.id === affixId);
+    return affix?.category ?? 'attr';
+  };
 
   return (
     <div className="tracker-page" style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -73,6 +89,33 @@ export default function Tracker() {
           ))}
         </div>
       </div>
+
+      {/* 武器类型选择器 */}
+      {isWeaponPosition && (
+        <div className="weapon-type-row" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>武器类型</span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            {weaponTypes.map(wt => (
+              <button
+                key={wt.id}
+                className="weapon-type-tab"
+                onClick={() => setWeaponType(wt.id)}
+                style={{
+                  padding: '0.3rem 0.6rem',
+                  background: state.weaponType === wt.id ? 'var(--color-damage)' : 'var(--color-card)',
+                  color: state.weaponType === wt.id ? 'var(--color-text)' : 'var(--color-text-muted)',
+                  border: `1px solid ${state.weaponType === wt.id ? 'var(--color-damage)' : 'var(--color-border)'}`,
+                  borderRadius: '0.3rem',
+                  fontSize: '0.8rem',
+                  fontWeight: state.weaponType === wt.id ? 'bold' : 'normal',
+                }}
+              >
+                {wt.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 装备卡片横排 */}
       <div className="equipment-row" style={{ marginBottom: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-start' }}>
@@ -109,7 +152,7 @@ export default function Tracker() {
                 borderBottom: '1px solid var(--color-border)',
                 fontSize: '0.8rem',
                 color: equip.firstAffix
-                  ? categoryColors[(affixPool.find(a => a.id === equip.firstAffix)?.category ?? 'attr')]
+                  ? categoryColors[resolveAffixCategory(equip.firstAffix)]
                   : 'var(--color-text-muted)',
                 display: 'flex',
                 alignItems: 'center',
@@ -138,7 +181,7 @@ export default function Tracker() {
                   </select>
                 ) : (
                   <span>
-                    {equip.firstAffix ? (affixPool.find(a => a.id === equip.firstAffix)?.name ?? '—') : '—'}
+                    {equip.firstAffix ? resolveAffixName(equip.firstAffix) : '—'}
                   </span>
                 )}
               </div>
@@ -146,7 +189,7 @@ export default function Tracker() {
               {/* 调律词条 */}
               {[0, 1, 2, 3].map(index => {
                 const affixId = equip.affixes[index];
-                const affix = affixId ? affixPool.find(a => a.id === affixId) : null;
+                const isTarget = affixId && state.targetAffixes.includes(affixId);
 
                 return (
                   <div key={index} style={{
@@ -159,11 +202,13 @@ export default function Tracker() {
                     <span style={{ color: 'var(--color-text-muted)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
                       {index + 1}
                     </span>
+                    {isTarget && <span style={{ color: 'var(--color-primary)', fontSize: '0.7rem' }}>★</span>}
                     <span style={{
                       fontSize: '0.85rem',
-                      color: affix ? categoryColors[affix.category] : 'var(--color-text-muted)',
+                      color: affixId ? categoryColors[resolveAffixCategory(affixId)] : 'var(--color-text-muted)',
+                      fontWeight: isTarget ? 'bold' : 'normal',
                     }}>
-                      {affix ? affix.name : '—'}
+                      {affixId ? resolveAffixName(affixId) : '—'}
                     </span>
                   </div>
                 );
@@ -224,13 +269,49 @@ export default function Tracker() {
             </div>
             <div style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>可调次数</div>
           </div>
+          {state.targetAffixes.length > 0 && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.3rem', fontWeight: 'bold', color: 'var(--color-damage)' }}>
+                {targetProbability.toFixed(1)}%
+              </div>
+              <div style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>目标概率</div>
+            </div>
+          )}
         </div>
+
+        {/* 目标概率条 */}
+        {state.targetAffixes.length > 0 && (
+          <div style={{ marginBottom: '0.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>目标词条总概率</span>
+              <div style={{
+                flex: 1,
+                height: '6px',
+                background: 'var(--color-border)',
+                borderRadius: '3px',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${Math.min(targetProbability, 100)}%`,
+                  background: 'var(--color-damage)',
+                  borderRadius: '3px',
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+              <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--color-damage)' }}>
+                {targetProbability.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* 词条池 - 类别并列 */}
         <div className="affix-pool-grid" style={{ display: 'flex', gap: '0.75rem' }}>
           {(['physAtk', 'elemAtk', 'survival', 'rate', 'damage', 'attr'] as const).map(category => {
             const categoryAffixes = affixPool.filter(a => a.category === category);
             if (categoryAffixes.length === 0) return null;
+            const maxProb = maxProbabilityInCategory(category);
 
             return (
               <div key={category} className="affix-category" style={{ flex: 1, minWidth: 0 }}>
@@ -246,6 +327,7 @@ export default function Tracker() {
                 </div>
                 {categoryAffixes.map(a => {
                   const canClick = isCurrentEquip && a.canAppear && currentEquipAffixCount < 4;
+                  const isTarget = state.targetAffixes.includes(a.id);
 
                   return (
                     <div
@@ -256,19 +338,46 @@ export default function Tracker() {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        padding: '0.35rem 0.5rem',
-                        borderLeft: `2px solid ${categoryColors[category]}`,
-                        marginBottom: '0.1rem',
+                        padding: '0.45rem 0.5rem',
+                        borderLeft: `${isTarget ? 3 : 2}px solid ${isTarget ? 'var(--color-primary)' : categoryColors[category]}`,
+                        marginBottom: '0.15rem',
                         fontSize: '0.8rem',
                         opacity: !a.canAppear ? 0.3 : 1,
                         cursor: canClick ? 'pointer' : 'default',
                         background: canClick ? 'var(--color-bg)' : 'transparent',
+                        fontWeight: isTarget ? 'bold' : 'normal',
+                        position: 'relative',
                       }}
                     >
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {/* 星标 + 名称 */}
+                      <span
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleTarget(a.id); }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: isTarget ? '0.75rem' : '0.65rem',
+                            color: isTarget ? 'var(--color-primary)' : 'var(--color-text-muted)',
+                            padding: 0,
+                            lineHeight: 1,
+                          }}
+                        >
+                          {isTarget ? '★' : '☆'}
+                        </button>
                         {a.name}
                       </span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      {/* 剩余 + 概率 + 微型概率条 */}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flex: '0 0 auto' }}>
                         <span style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>
                           {a.remainingCount}
                         </span>
@@ -279,6 +388,22 @@ export default function Tracker() {
                         }}>
                           {a.probability > 0 ? `${a.probability.toFixed(1)}%` : '—'}
                         </span>
+                        {a.probability > 0 && maxProb > 0 && (
+                          <div style={{
+                            width: '24px',
+                            height: '4px',
+                            background: 'var(--color-border)',
+                            borderRadius: '2px',
+                            overflow: 'hidden',
+                          }}>
+                            <div style={{
+                              height: '100%',
+                              width: `${(a.probability / maxProb) * 100}%`,
+                              background: categoryColors[category],
+                              borderRadius: '2px',
+                            }} />
+                          </div>
+                        )}
                       </span>
                     </div>
                   );
