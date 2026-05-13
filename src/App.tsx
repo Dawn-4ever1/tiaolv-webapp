@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import Tracker from './pages/Tracker';
 import Database from './pages/Database';
 import About from './pages/About';
@@ -79,6 +80,7 @@ function App() {
         }}>
           燕云调律 — 垫子调律法工具
         </footer>
+        <Analytics />
       </div>
     </BrowserRouter>
   );
