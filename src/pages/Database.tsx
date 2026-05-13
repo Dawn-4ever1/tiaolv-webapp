@@ -1,4 +1,4 @@
-import { positions, getCategoryName, getWeaponDamageName, weaponTypes, getWeightScheme } from '../data/affixes';
+import { positions, getCategoryName, weaponTypes } from '../data/affixes';
 import { categoryColors } from '../utils/styles';
 
 export default function Database() {
@@ -9,13 +9,10 @@ export default function Database() {
       </h1>
 
       <p style={{ color: 'var(--color-text-muted)', marginBottom: '2rem' }}>
-        各装备位置的调律词条池一览，含权重与基础概率
+        各装备位置的调律词条池一览
       </p>
 
       {positions.map(position => {
-        const scheme = getWeightScheme(position.id);
-        const totalWeight = position.affixes.reduce((sum, a) => sum + a.weight, 0)
-          + (position.specialAffix ? position.specialAffix.weight : 0);
         const totalAffixCount = position.affixes.length + (position.specialAffix ? 1 : 0);
 
         return (
@@ -32,23 +29,9 @@ export default function Database() {
               {position.name}
             </h2>
 
-            <div style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
-              共 {totalAffixCount} 个词条 · {scheme.type === 'equal' ? '等概率' : '非等权'}
+            <div style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+              共 {totalAffixCount} 个词条
             </div>
-
-            {scheme.type === 'weighted' && (
-              <div style={{
-                fontSize: '0.85rem',
-                color: 'var(--color-damage)',
-                marginBottom: '1rem',
-                padding: '0.5rem 0.75rem',
-                background: 'var(--color-bg)',
-                borderRadius: '0.3rem',
-                borderLeft: '3px solid var(--color-damage)',
-              }}>
-                {scheme.description}
-              </div>
-            )}
 
             {/* 武器类型增伤说明 */}
             {position.specialAffix?.type === 'weaponDamage' && (
@@ -82,8 +65,6 @@ export default function Database() {
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                       {categoryAffixes.map(affix => {
-                        const baseProbability = (affix.weight / totalWeight) * 100;
-
                         return (
                           <span
                             key={affix.id}
@@ -99,9 +80,6 @@ export default function Database() {
                             }}
                           >
                             {affix.name}
-                            <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
-                              {baseProbability.toFixed(1)}%
-                            </span>
                           </span>
                         );
                       })}
@@ -123,8 +101,6 @@ export default function Database() {
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                     {weaponTypes.map(wt => {
-                      const baseProbability = (position.specialAffix!.weight / totalWeight) * 100;
-
                       return (
                         <span
                           key={wt.id}
@@ -140,9 +116,6 @@ export default function Database() {
                           }}
                         >
                           {wt.damageAffixName}
-                          <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
-                            {baseProbability.toFixed(1)}%
-                          </span>
                         </span>
                       );
                     })}
