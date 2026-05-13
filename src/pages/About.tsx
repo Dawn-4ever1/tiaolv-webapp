@@ -70,24 +70,7 @@ export default function About() {
           </p>
         </section>
 
-        <section style={{ padding: '1.5rem', background: 'var(--color-card)', borderRadius: '0.75rem' }}>
-          <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--color-text)' }}>
-            关于概率计算
-          </h2>
-          <p style={{ color: 'var(--color-text-muted)', lineHeight: 1.7 }}>
-            各位置的概率基于游戏内实际权重计算：
-          </p>
-          <ul style={{ color: 'var(--color-text-muted)', lineHeight: 1.9, marginTop: '0.75rem', paddingLeft: '1.5rem' }}>
-            <li><strong>左/右武器</strong>：增伤类权重 1（≈5.9%），其余14词权重 ≈1.143（≈6.7%）</li>
-            <li><strong>环/佩</strong>：21词条等概率，每个 ≈4.76%</li>
-            <li><strong>冠胄/胸甲</strong>：22词条等概率，每个 ≈4.55%</li>
-            <li><strong>胫甲/腕甲</strong>：增伤类权重 1（≈4%），其余20词权重 1.15（≈4.6%）</li>
-          </ul>
-          <p style={{ color: 'var(--color-text-muted)', lineHeight: 1.7, marginTop: '0.75rem' }}>
-            工具中的概率基于以上权重和已出现词条的剩余数量动态计算。每次调律都是独立随机事件，过往记录不影响下一次的结果，概率仅供参考。
-          </p>
-        </section>
-
+        
         <section style={{ padding: '1.5rem', background: 'var(--color-card)', borderRadius: '0.75rem' }}>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: 'var(--color-text)' }}>
             词条约束规则
